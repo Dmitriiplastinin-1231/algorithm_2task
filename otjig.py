@@ -67,6 +67,10 @@ def simulated_annealing(
     acceptance_mode="classic",
     stop_condition=None,
 ):
+    acceptance_mode = (acceptance_mode or "classic").lower()
+    if acceptance_mode not in {"classic", "boltzmann"}:
+        raise ValueError("acceptance_mode должен быть 'classic' или 'boltzmann'")
+
     if seed is not None:
         random.seed(seed)
 
@@ -181,6 +185,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    acceptance_mode = (acceptance_mode or "classic").lower()
-    if acceptance_mode not in {"classic", "boltzmann"}:
-        raise ValueError("acceptance_mode должен быть 'classic' или 'boltzmann'")

@@ -25,6 +25,15 @@ def undirected_edges(path):
 
 
 class AntColonyGUI:
+    PRESET_MATRIX_1GRAPH = [
+        [0, 3, float("inf"), float("inf"), 1, float("inf")],
+        [3, 0, 8, float("inf"), float("inf"), 3],
+        [float("inf"), 3, 0, 1, float("inf"), 3],
+        [float("inf"), float("inf"), 8, 0, 3, float("inf")],
+        [3, float("inf"), float("inf"), 1, 0, float("inf")],
+        [3, float("inf"), 1, 5, 4, 0],
+    ]
+
     ALGORITHM_OPTIONS = [
         ("Муравьиный (базовый)", "ant_basic"),
         ("Муравьиный (элитные)", "ant_elite"),
@@ -72,6 +81,10 @@ class AntColonyGUI:
         ttk.Entry(control, textvariable=self.file_var, width=45).grid(row=0, column=1, sticky="we", padx=5)
         ttk.Button(control, text="Выбрать", command=self.choose_file).grid(row=0, column=2, padx=5)
         ttk.Button(control, text="Загрузить", command=self.load_graph).grid(row=0, column=3, padx=5)
+        ttk.Button(control, text="MATRIX_1GRAPH", command=self.load_preset_graph).grid(row=0, column=4, padx=5)
+        ttk.Button(control, text="MATRIX_1GRAPH + запуск", command=self.run_preset_graph).grid(
+            row=0, column=5, padx=5
+        )
 
         ttk.Label(control, text="Итераций").grid(row=1, column=0, sticky="w")
         ttk.Entry(control, textvariable=self.iter_var, width=8).grid(row=1, column=1, sticky="w")
@@ -149,6 +162,36 @@ class AntColonyGUI:
             self._draw_state()
         except Exception as exc:
             messagebox.showerror("Ошибка загрузки", str(exc))
+
+    @staticmethod
+    def _build_graph_from_matrix(matrix):
+        n = len(matrix)
+        graph = Graph(n)
+        for i in range(n):
+            for j in range(i + 1, n):
+                w1 = matrix[i][j]
+                w2 = matrix[j][i]
+                finite = [w for w in (w1, w2) if w != float("inf")]
+                if finite:
+                    graph.add_edge(i, j, float(min(finite)))
+        return graph
+
+    def load_preset_graph(self):
+        try:
+            self.graph = self._build_graph_from_matrix(self.PRESET_MATRIX_1GRAPH)
+            self._build_visual_graph()
+            self.result_path = None
+            self.result_length = None
+            self.status_var.set("Загружен тестовый граф MATRIX_1GRAPH")
+            self._draw_state()
+        except Exception as exc:
+            messagebox.showerror("Ошибка загрузки MATRIX_1GRAPH", str(exc))
+
+    def run_preset_graph(self):
+        self.load_preset_graph()
+        if self.graph is not None:
+            self.algorithm_display_var.set(self.ALGORITHM_OPTIONS[0][0])
+            self.run_solver()
 
     def _build_visual_graph(self, max_edges=5000, seed=42):
         G = nx.Graph()
@@ -281,66 +324,70 @@ class AntColonyGUI:
             start_time = time.time()
             final_path = None
             final_length = None
-
-            if algorithm_key in {"ant_basic", "ant_elite"}:
-                solver = AntColonyTSP(
-                    self.graph,
-                    ants=ants,
-                    alpha=alpha,
-                    beta=beta,
-                    evaporation=evaporation,
-                    q=q,
-                    seed=seed,
-                    mode="elite" if algorithm_key == "ant_elite" else "basic",
-                    elite_ants=elite_ants,
-                )
-
-                def callback(iteration, best_path, best_length, improved, previous_best):
-                    if improved and best_path:
-                        prev_set = undirected_edges(previous_best) if previous_best else set()
-                        new_set = undirected_edges(best_path)
-                        added = new_set - prev_set
-                        removed = prev_set - new_set
-                    else:
-                        added = set()
-                        removed = set()
-
-                    self.events.put(
-                        (
-                            "progress",
-                            iteration,
-                            best_path,
-                            best_length,
-                            added,
-                            removed,
-                        )
+            worker_failed = False
+            try:
+                if algorithm_key in {"ant_basic", "ant_elite"}:
+                    solver = AntColonyTSP(
+                        self.graph,
+                        ants=ants,
+                        alpha=alpha,
+                        beta=beta,
+                        evaporation=evaporation,
+                        q=q,
+                        seed=seed,
+                        mode="elite" if algorithm_key == "ant_elite" else "basic",
+                        elite_ants=elite_ants,
                     )
 
-                result = solver.solve(
-                    iterations=iterations,
-                    callback=callback,
-                    stop_condition=lambda: self.stop_event.is_set(),
-                )
-                if result is not None:
-                    final_path = result.best_path
-                    final_length = result.best_length
-            else:
-                mode = "boltzmann" if algorithm_key == "sa_boltzmann" else "classic"
-                tour, length = simulated_annealing(
-                    self.graph,
-                    restarts=restarts,
-                    steps_per_restart=steps_per_restart,
-                    seed=seed,
-                    acceptance_mode=mode,
-                    stop_condition=lambda: self.stop_event.is_set(),
-                )
-                if tour:
-                    final_path = tour + [tour[0]]
-                    final_length = length
-                    self.events.put(("progress", "final", final_path, final_length, set(), set()))
+                    def callback(iteration, best_path, best_length, improved, previous_best):
+                        if improved and best_path:
+                            prev_set = undirected_edges(previous_best) if previous_best else set()
+                            new_set = undirected_edges(best_path)
+                            added = new_set - prev_set
+                            removed = prev_set - new_set
+                        else:
+                            added = set()
+                            removed = set()
+
+                        self.events.put(
+                            (
+                                "progress",
+                                iteration,
+                                best_path,
+                                best_length,
+                                added,
+                                removed,
+                            )
+                        )
+
+                    result = solver.solve(
+                        iterations=iterations,
+                        callback=callback,
+                        stop_condition=lambda: self.stop_event.is_set(),
+                    )
+                    if result is not None:
+                        final_path = result.best_path
+                        final_length = result.best_length
+                else:
+                    mode = "boltzmann" if algorithm_key == "sa_boltzmann" else "classic"
+                    tour, length = simulated_annealing(
+                        self.graph,
+                        restarts=restarts,
+                        steps_per_restart=steps_per_restart,
+                        seed=seed,
+                        acceptance_mode=mode,
+                        stop_condition=lambda: self.stop_event.is_set(),
+                    )
+                    if tour:
+                        final_path = tour + [tour[0]]
+                        final_length = length
+                        self.events.put(("progress", "final", final_path, final_length, set(), set()))
+            except Exception as exc:
+                worker_failed = True
+                self.events.put(("error", str(exc)))
 
             elapsed = time.time() - start_time
-            self.events.put(("done", final_path, final_length, elapsed))
+            self.events.put(("done", final_path, final_length, elapsed, worker_failed))
 
         self.worker = threading.Thread(target=worker, daemon=True)
         self.worker.start()
@@ -366,9 +413,11 @@ class AntColonyGUI:
                         best_length=best_length,
                     )
                 elif kind == "done":
-                    _, best_path, best_length, elapsed = event
+                    _, best_path, best_length, elapsed, worker_failed = event
                     self.start_btn.configure(state="normal")
                     self.stop_btn.configure(state="disabled")
+                    if worker_failed:
+                        continue
                     if best_path is None:
                         self.status_var.set(f"Завершено за {elapsed:.2f} c. Цикл не найден.")
                     else:
@@ -382,6 +431,10 @@ class AntColonyGUI:
                             iteration="final",
                             best_length=best_length,
                         )
+                elif kind == "error":
+                    _, error_text = event
+                    self.status_var.set("Ошибка выполнения алгоритма")
+                    messagebox.showerror("Ошибка выполнения", error_text)
         except queue.Empty:
             pass
         finally:

@@ -74,6 +74,12 @@ class AnnealingGUI:
         self.fig, self.ax = plt.subplots(figsize=(12, 7))
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        self.root.bind("<Destroy>", self._on_destroy, add="+")
+
+    def _on_destroy(self, _event):
+        if self.fig is not None:
+            plt.close(self.fig)
+            self.fig = None
 
     def choose_file(self):
         path = filedialog.askopenfilename(

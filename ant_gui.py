@@ -26,8 +26,9 @@ def undirected_edges(path):
 class AntColonyGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Муравьиный алгоритм для задачи коммивояжёра")
-        self.root.geometry("1300x820")
+        if isinstance(self.root, (tk.Tk, tk.Toplevel)):
+            self.root.title("Муравьиный алгоритм для задачи коммивояжёра")
+            self.root.geometry("1300x820")
 
         self.graph = None
         self.graph_nx = None

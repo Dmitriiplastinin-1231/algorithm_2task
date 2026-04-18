@@ -20,6 +20,12 @@ def path_edges(path):
     return [(path[i], path[i + 1]) for i in range(len(path) - 1)]
 
 
+def make_cycle(path):
+    if not path:
+        return []
+    return path + [path[0]]
+
+
 class AnnealingGUI:
     def __init__(self, root):
         self.root = root
@@ -54,7 +60,7 @@ class AnnealingGUI:
         ttk.Label(control, text="Шагов на рестарт (пусто = авто)").grid(row=1, column=2, sticky="w", padx=(12, 0))
         ttk.Entry(control, textvariable=self.steps_var, width=12).grid(row=1, column=3, sticky="w", padx=(5, 0))
 
-        ttk.Label(control, text="seed").grid(row=1, column=4, sticky="w", padx=(12, 0))
+        ttk.Label(control, text="Seed").grid(row=1, column=4, sticky="w", padx=(12, 0))
         ttk.Entry(control, textvariable=self.seed_var, width=8).grid(row=1, column=5, sticky="w", padx=(5, 0))
 
         self.start_btn = ttk.Button(control, text="Запустить имитацию отжига", command=self.run_solver)
@@ -208,7 +214,7 @@ class AnnealingGUI:
                         self.status_var.set(f"Завершено за {elapsed:.2f} c. Цикл не найден.")
                         self._draw_state()
                     else:
-                        cycle = best_tour + [best_tour[0]]
+                        cycle = make_cycle(best_tour)
                         self.status_var.set(
                             f"Готово за {elapsed:.2f} c. Лучшая длина: {best_length:.2f}"
                         )

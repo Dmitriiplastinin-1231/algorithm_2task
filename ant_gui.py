@@ -173,6 +173,7 @@ class AntColonyGUI:
             for j in range(i + 1, n):
                 w1 = matrix[i][j]
                 w2 = matrix[j][i]
+                # Если матрица несимметрична, берём минимальный конечный вес как общий вес неориентированного ребра.
                 weight = min((w for w in (w1, w2) if w != float("inf")), default=None)
                 if weight is not None:
                     graph.add_edge(i, j, float(weight))

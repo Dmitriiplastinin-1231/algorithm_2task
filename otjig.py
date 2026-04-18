@@ -59,7 +59,18 @@ def random_two_opt_indices(n):
     return i, k
 
 
-def simulated_annealing(graph, restarts=8, steps_per_restart=None, seed=42):
+def simulated_annealing(
+    graph,
+    restarts=8,
+    steps_per_restart=None,
+    seed=42,
+    acceptance_mode="classic",
+    stop_condition=None,
+):
+    acceptance_mode = (acceptance_mode or "classic").lower()
+    if acceptance_mode not in {"classic", "boltzmann"}:
+        raise ValueError("acceptance_mode должен быть 'classic' или 'boltzmann'")
+
     if seed is not None:
         random.seed(seed)
 
@@ -76,6 +87,8 @@ def simulated_annealing(graph, restarts=8, steps_per_restart=None, seed=42):
     starts = random.sample(range(n), initial_candidates)
 
     for restart in range(restarts):
+        if stop_condition and stop_condition():
+            break
         start_vertex = starts[restart % len(starts)]
         tour = initial_hamiltonian_tour(graph, start_vertex)
         current_length = cycle_length(graph, tour)
@@ -85,10 +98,20 @@ def simulated_annealing(graph, restarts=8, steps_per_restart=None, seed=42):
         current_best_length = current_length
 
         temperature = current_length / n
+        base_temperature = temperature
         min_temperature = 1e-4
-        alpha = (min_temperature / temperature) ** (1.0 / max(1, steps_per_restart - 1))
+        if temperature <= min_temperature:
+            temperature = min_temperature
+            base_temperature = min_temperature
+            alpha = 1.0
+        else:
+            alpha = (min_temperature / temperature) ** (1.0 / max(1, steps_per_restart - 1))
 
-        for _ in range(steps_per_restart):
+        for step in range(steps_per_restart):
+            if stop_condition and stop_condition():
+                break
+            if acceptance_mode == "boltzmann":
+                temperature = max(min_temperature, base_temperature / math.log(step + 2.0))
             pair = random_two_opt_indices(n)
             if pair is None:
                 continue
@@ -103,7 +126,8 @@ def simulated_annealing(graph, restarts=8, steps_per_restart=None, seed=42):
                     current_best_length = current_length
                     current_best_tour = current_tour[:]
 
-            temperature *= alpha
+            if acceptance_mode != "boltzmann":
+                temperature = max(min_temperature, temperature * alpha)
 
         if current_best_length < best_length:
             best_length = current_best_length
@@ -112,14 +136,18 @@ def simulated_annealing(graph, restarts=8, steps_per_restart=None, seed=42):
     return best_tour, best_length
 
 
-def solve(file_name, restarts=8, steps_per_restart=None, seed=42):
+def solve(file_name, restarts=8, steps_per_restart=None, seed=42, acceptance_mode="classic"):
     graph = Graph.load_from_stp(file_name)
     started = time.time()
 
     baseline_tour = initial_hamiltonian_tour(graph, 0)
     baseline_length = cycle_length(graph, baseline_tour)
     best_tour, best_length = simulated_annealing(
-        graph, restarts=restarts, steps_per_restart=steps_per_restart, seed=seed
+        graph,
+        restarts=restarts,
+        steps_per_restart=steps_per_restart,
+        seed=seed,
+        acceptance_mode=acceptance_mode,
     )
 
     elapsed = time.time() - started
@@ -142,8 +170,20 @@ def main():
         help="Итераций отжига на один рестарт (по умолчанию зависит от n)",
     )
     parser.add_argument("--seed", type=int, default=42, help="Seed для воспроизводимости")
+    parser.add_argument(
+        "--mode",
+        choices=["classic", "boltzmann"],
+        default="classic",
+        help="Режим отжига: classic или boltzmann",
+    )
     args = parser.parse_args()
-    solve(args.file, restarts=args.restarts, steps_per_restart=args.steps_per_restart, seed=args.seed)
+    solve(
+        args.file,
+        restarts=args.restarts,
+        steps_per_restart=args.steps_per_restart,
+        seed=args.seed,
+        acceptance_mode=args.mode,
+    )
 
 
 if __name__ == "__main__":

@@ -67,16 +67,17 @@ class AntColonyGUI:
         control.pack(side=tk.TOP, fill=tk.X)
 
         self.file_var = tk.StringVar(value="")
-        self.iter_var = tk.StringVar(value="200")
-        self.ants_var = tk.StringVar(value="50")
-        self.alpha_var = tk.StringVar(value="1.0")
-        self.beta_var = tk.StringVar(value="3.0")
-        self.evap_var = tk.StringVar(value="0.45")
-        self.q_var = tk.StringVar(value="120.0")
-        self.elite_ants_var = tk.StringVar(value="5")
-        self.restarts_var = tk.StringVar(value="8")
-        self.steps_var = tk.StringVar(value="")
-        self.seed_var = tk.StringVar(value="42")
+        self.ant_iter_var = tk.StringVar(value="200")
+        self.ant_ants_var = tk.StringVar(value="50")
+        self.ant_alpha_var = tk.StringVar(value="1.0")
+        self.ant_beta_var = tk.StringVar(value="3.0")
+        self.ant_evap_var = tk.StringVar(value="0.45")
+        self.ant_q_var = tk.StringVar(value="120.0")
+        self.ant_elite_ants_var = tk.StringVar(value="5")
+        self.ant_seed_var = tk.StringVar(value="42")
+        self.sa_restarts_var = tk.StringVar(value="8")
+        self.sa_steps_var = tk.StringVar(value="")
+        self.sa_seed_var = tk.StringVar(value="42")
         self.algorithm_display_var = tk.StringVar(value=self.DEFAULT_ALGORITHM_LABEL)
         self.algorithm_map = {label: key for label, key in self.ALGORITHM_OPTIONS}
 
@@ -89,53 +90,63 @@ class AntColonyGUI:
             row=0, column=5, padx=5
         )
 
-        ttk.Label(control, text="Итераций").grid(row=1, column=0, sticky="w")
-        ttk.Entry(control, textvariable=self.iter_var, width=8).grid(row=1, column=1, sticky="w")
+        ttk.Label(control, text="Параметры муравьиного алгоритма").grid(
+            row=1, column=0, columnspan=7, sticky="w", pady=(8, 0)
+        )
 
-        ttk.Label(control, text="Муравьёв").grid(row=1, column=1, sticky="e", padx=(0, 90))
-        ttk.Entry(control, textvariable=self.ants_var, width=8).grid(row=1, column=1, sticky="e", padx=(0, 10))
+        ttk.Label(control, text="Итераций").grid(row=2, column=0, sticky="w")
+        ttk.Entry(control, textvariable=self.ant_iter_var, width=8).grid(row=2, column=1, sticky="w")
 
-        ttk.Label(control, text="alpha").grid(row=1, column=2, sticky="w")
-        ttk.Entry(control, textvariable=self.alpha_var, width=8).grid(row=1, column=2, sticky="e")
+        ttk.Label(control, text="Муравьёв").grid(row=2, column=1, sticky="e", padx=(0, 90))
+        ttk.Entry(control, textvariable=self.ant_ants_var, width=8).grid(row=2, column=1, sticky="e", padx=(0, 10))
 
-        ttk.Label(control, text="beta").grid(row=1, column=3, sticky="w")
-        ttk.Entry(control, textvariable=self.beta_var, width=8).grid(row=1, column=3, sticky="e")
+        ttk.Label(control, text="alpha").grid(row=2, column=2, sticky="w")
+        ttk.Entry(control, textvariable=self.ant_alpha_var, width=8).grid(row=2, column=2, sticky="e")
 
-        ttk.Label(control, text="evap").grid(row=1, column=4, sticky="w")
-        ttk.Entry(control, textvariable=self.evap_var, width=8).grid(row=1, column=4, sticky="e")
+        ttk.Label(control, text="beta").grid(row=2, column=3, sticky="w")
+        ttk.Entry(control, textvariable=self.ant_beta_var, width=8).grid(row=2, column=3, sticky="e")
 
-        ttk.Label(control, text="Q").grid(row=1, column=5, sticky="w")
-        ttk.Entry(control, textvariable=self.q_var, width=8).grid(row=1, column=5, sticky="e")
+        ttk.Label(control, text="evap").grid(row=2, column=4, sticky="w")
+        ttk.Entry(control, textvariable=self.ant_evap_var, width=8).grid(row=2, column=4, sticky="e")
 
-        ttk.Label(control, text="seed").grid(row=1, column=6, sticky="w")
-        ttk.Entry(control, textvariable=self.seed_var, width=8).grid(row=1, column=6, sticky="e")
+        ttk.Label(control, text="Q").grid(row=2, column=5, sticky="w")
+        ttk.Entry(control, textvariable=self.ant_q_var, width=8).grid(row=2, column=5, sticky="e")
 
-        ttk.Label(control, text="Алгоритм").grid(row=2, column=0, sticky="w", pady=(8, 0))
+        ttk.Label(control, text="seed").grid(row=2, column=6, sticky="w")
+        ttk.Entry(control, textvariable=self.ant_seed_var, width=8).grid(row=2, column=6, sticky="e")
+
+        ttk.Label(control, text="Элитных муравьёв").grid(row=3, column=0, sticky="w", pady=(6, 0))
+        ttk.Entry(control, textvariable=self.ant_elite_ants_var, width=8).grid(row=3, column=1, sticky="w", pady=(6, 0))
+
+        ttk.Label(control, text="Параметры отжига").grid(
+            row=4, column=0, columnspan=7, sticky="w", pady=(8, 0)
+        )
+        ttk.Label(control, text="Рестартов").grid(row=5, column=0, sticky="w")
+        ttk.Entry(control, textvariable=self.sa_restarts_var, width=8).grid(row=5, column=1, sticky="w")
+
+        ttk.Label(control, text="Шагов/рестарт").grid(row=5, column=2, sticky="w")
+        ttk.Entry(control, textvariable=self.sa_steps_var, width=8).grid(row=5, column=2, sticky="e")
+
+        ttk.Label(control, text="seed").grid(row=5, column=3, sticky="w")
+        ttk.Entry(control, textvariable=self.sa_seed_var, width=8).grid(row=5, column=3, sticky="e")
+
+        ttk.Label(control, text="Алгоритм").grid(row=6, column=0, sticky="w", pady=(8, 0))
         ttk.Combobox(
             control,
             textvariable=self.algorithm_display_var,
             values=[label for label, _ in self.ALGORITHM_OPTIONS],
             state="readonly",
             width=28,
-        ).grid(row=2, column=1, sticky="w", pady=(8, 0))
-
-        ttk.Label(control, text="Элитных муравьёв").grid(row=2, column=2, sticky="w", pady=(8, 0))
-        ttk.Entry(control, textvariable=self.elite_ants_var, width=8).grid(row=2, column=2, sticky="e", pady=(8, 0))
-
-        ttk.Label(control, text="Рестартов (отжиг)").grid(row=2, column=3, sticky="w", pady=(8, 0))
-        ttk.Entry(control, textvariable=self.restarts_var, width=8).grid(row=2, column=3, sticky="e", pady=(8, 0))
-
-        ttk.Label(control, text="Шагов/рестарт").grid(row=2, column=4, sticky="w", pady=(8, 0))
-        ttk.Entry(control, textvariable=self.steps_var, width=8).grid(row=2, column=4, sticky="e", pady=(8, 0))
+        ).grid(row=6, column=1, sticky="w", pady=(8, 0))
 
         self.start_btn = ttk.Button(control, text="Запустить выбранный алгоритм", command=self.run_solver)
-        self.start_btn.grid(row=3, column=0, columnspan=3, sticky="we", pady=(8, 0))
+        self.start_btn.grid(row=7, column=0, columnspan=3, sticky="we", pady=(8, 0))
 
         self.stop_btn = ttk.Button(control, text="Стоп", command=self.stop_solver, state="disabled")
-        self.stop_btn.grid(row=3, column=3, sticky="we", pady=(8, 0), padx=5)
+        self.stop_btn.grid(row=7, column=3, sticky="we", pady=(8, 0), padx=5)
 
         self.status_var = tk.StringVar(value="Загрузите граф")
-        ttk.Label(control, textvariable=self.status_var).grid(row=3, column=4, columnspan=3, sticky="w", padx=5)
+        ttk.Label(control, textvariable=self.status_var).grid(row=7, column=4, columnspan=3, sticky="w", padx=5)
 
         control.columnconfigure(1, weight=1)
 
@@ -304,18 +315,22 @@ class AntColonyGUI:
                 return
 
         try:
-            iterations = int(self.iter_var.get())
-            ants = int(self.ants_var.get())
-            alpha = float(self.alpha_var.get())
-            beta = float(self.beta_var.get())
-            evaporation = float(self.evap_var.get())
-            q = float(self.q_var.get())
-            elite_ants = int(self.elite_ants_var.get())
-            restarts = int(self.restarts_var.get())
-            steps_text = self.steps_var.get().strip()
-            steps_per_restart = int(steps_text) if steps_text else None
-            seed_text = self.seed_var.get().strip()
-            seed = int(seed_text) if seed_text else None
+            ant_params = {
+                "iterations": int(self.ant_iter_var.get()),
+                "ants": int(self.ant_ants_var.get()),
+                "alpha": float(self.ant_alpha_var.get()),
+                "beta": float(self.ant_beta_var.get()),
+                "evaporation": float(self.ant_evap_var.get()),
+                "q": float(self.ant_q_var.get()),
+                "elite_ants": int(self.ant_elite_ants_var.get()),
+                "seed": int(self.ant_seed_var.get().strip()) if self.ant_seed_var.get().strip() else None,
+            }
+            sa_steps_text = self.sa_steps_var.get().strip()
+            sa_params = {
+                "restarts": int(self.sa_restarts_var.get()),
+                "steps_per_restart": int(sa_steps_text) if sa_steps_text else None,
+                "seed": int(self.sa_seed_var.get().strip()) if self.sa_seed_var.get().strip() else None,
+            }
         except ValueError:
             messagebox.showerror("Ошибка", "Проверьте числовые параметры.")
             return
@@ -336,14 +351,14 @@ class AntColonyGUI:
                 if algorithm_key in {"ant_basic", "ant_elite"}:
                     solver = AntColonyTSP(
                         self.graph,
-                        ants=ants,
-                        alpha=alpha,
-                        beta=beta,
-                        evaporation=evaporation,
-                        q=q,
-                        seed=seed,
+                        ants=ant_params["ants"],
+                        alpha=ant_params["alpha"],
+                        beta=ant_params["beta"],
+                        evaporation=ant_params["evaporation"],
+                        q=ant_params["q"],
+                        seed=ant_params["seed"],
                         mode="elite" if algorithm_key == "ant_elite" else "basic",
-                        elite_ants=elite_ants,
+                        elite_ants=ant_params["elite_ants"],
                     )
 
                     def callback(iteration, best_path, best_length, improved, previous_best):
@@ -368,7 +383,7 @@ class AntColonyGUI:
                         )
 
                     result = solver.solve(
-                        iterations=iterations,
+                        iterations=ant_params["iterations"],
                         callback=callback,
                         stop_condition=lambda: self.stop_event.is_set(),
                     )
@@ -379,9 +394,9 @@ class AntColonyGUI:
                     mode = "boltzmann" if algorithm_key == "sa_boltzmann" else "classic"
                     tour, length = simulated_annealing(
                         self.graph,
-                        restarts=restarts,
-                        steps_per_restart=steps_per_restart,
-                        seed=seed,
+                        restarts=sa_params["restarts"],
+                        steps_per_restart=sa_params["steps_per_restart"],
+                        seed=sa_params["seed"],
                         acceptance_mode=mode,
                         stop_condition=lambda: self.stop_event.is_set(),
                     )

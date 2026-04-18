@@ -20,6 +20,8 @@ class AntColonyTSP:
         evaporation=0.5,
         q=100.0,
         seed=None,
+        mode="basic",
+        elite_ants=5,
     ):
         self.graph = graph
         self.ants = max(1, int(ants))
@@ -28,6 +30,10 @@ class AntColonyTSP:
         # Ограничиваем испарение в диапазоне [0.0, 0.999], чтобы феромон не обнулялся полностью за шаг.
         self.evaporation = min(max(float(evaporation), 0.0), 0.999)
         self.q = float(q)
+        self.mode = (mode or "basic").lower()
+        if self.mode not in {"basic", "elite"}:
+            raise ValueError("mode должен быть 'basic' или 'elite'")
+        self.elite_ants = max(0, int(elite_ants))
         self.random = random.Random(seed)
         self.pheromone = {}
         self._init_pheromone()
@@ -102,10 +108,10 @@ class AntColonyTSP:
         for edge in self.pheromone:
             self.pheromone[edge] = max(AntColonyTSP.MIN_PHEROMONE, self.pheromone[edge] * k)
 
-    def _deposit(self, tour, length):
+    def _deposit(self, tour, length, multiplier=1.0):
         if not tour or length <= 0:
             return
-        delta = self.q / length
+        delta = (self.q / length) * max(0.0, float(multiplier))
         for i in range(len(tour) - 1):
             edge = self._edge_key(tour[i], tour[i + 1])
             self.pheromone[edge] = self.pheromone.get(edge, AntColonyTSP.MIN_PHEROMONE) + delta
@@ -141,6 +147,11 @@ class AntColonyTSP:
                 best_path = iteration_best[:]
                 best_length = iteration_best_len
                 improved = True
+
+            if self.mode == "elite":
+                if best_path is not None and self.elite_ants > 0:
+                    self._deposit(best_path, best_length, multiplier=self.elite_ants)
+            elif improved:
                 self._deposit(best_path, best_length)
 
             if callback:

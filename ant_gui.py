@@ -11,6 +11,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from ant_colony import AntColonyTSP
 from graphClass import Graph
+from otjig import simulated_annealing
 
 
 def path_edges(path):
@@ -24,9 +25,16 @@ def undirected_edges(path):
 
 
 class AntColonyGUI:
+    ALGORITHM_OPTIONS = [
+        ("Муравьиный (базовый)", "ant_basic"),
+        ("Муравьиный (элитные)", "ant_elite"),
+        ("Отжиг (базовый)", "sa_classic"),
+        ("Отжиг (Больцмановский)", "sa_boltzmann"),
+    ]
+
     def __init__(self, root):
         self.root = root
-        self.root.title("Муравьиный алгоритм для задачи коммивояжёра")
+        self.root.title("Алгоритмы для задачи коммивояжёра")
         self.root.geometry("1300x820")
 
         self.graph = None
@@ -53,7 +61,12 @@ class AntColonyGUI:
         self.beta_var = tk.StringVar(value="3.0")
         self.evap_var = tk.StringVar(value="0.45")
         self.q_var = tk.StringVar(value="120.0")
+        self.elite_ants_var = tk.StringVar(value="5")
+        self.restarts_var = tk.StringVar(value="8")
+        self.steps_var = tk.StringVar(value="")
         self.seed_var = tk.StringVar(value="42")
+        self.algorithm_display_var = tk.StringVar(value=self.ALGORITHM_OPTIONS[0][0])
+        self.algorithm_map = {label: key for label, key in self.ALGORITHM_OPTIONS}
 
         ttk.Label(control, text="Файл графа (.stp):").grid(row=0, column=0, sticky="w")
         ttk.Entry(control, textvariable=self.file_var, width=45).grid(row=0, column=1, sticky="we", padx=5)
@@ -81,14 +94,32 @@ class AntColonyGUI:
         ttk.Label(control, text="seed").grid(row=1, column=6, sticky="w")
         ttk.Entry(control, textvariable=self.seed_var, width=8).grid(row=1, column=6, sticky="e")
 
-        self.start_btn = ttk.Button(control, text="Запустить муравьиный алгоритм", command=self.run_solver)
-        self.start_btn.grid(row=2, column=0, columnspan=3, sticky="we", pady=(8, 0))
+        ttk.Label(control, text="Алгоритм").grid(row=2, column=0, sticky="w", pady=(8, 0))
+        ttk.Combobox(
+            control,
+            textvariable=self.algorithm_display_var,
+            values=[label for label, _ in self.ALGORITHM_OPTIONS],
+            state="readonly",
+            width=28,
+        ).grid(row=2, column=1, sticky="w", pady=(8, 0))
+
+        ttk.Label(control, text="Элитных муравьёв").grid(row=2, column=2, sticky="w", pady=(8, 0))
+        ttk.Entry(control, textvariable=self.elite_ants_var, width=8).grid(row=2, column=2, sticky="e", pady=(8, 0))
+
+        ttk.Label(control, text="Рестартов (отжиг)").grid(row=2, column=3, sticky="w", pady=(8, 0))
+        ttk.Entry(control, textvariable=self.restarts_var, width=8).grid(row=2, column=3, sticky="e", pady=(8, 0))
+
+        ttk.Label(control, text="Шагов/рестарт").grid(row=2, column=4, sticky="w", pady=(8, 0))
+        ttk.Entry(control, textvariable=self.steps_var, width=8).grid(row=2, column=4, sticky="e", pady=(8, 0))
+
+        self.start_btn = ttk.Button(control, text="Запустить выбранный алгоритм", command=self.run_solver)
+        self.start_btn.grid(row=3, column=0, columnspan=3, sticky="we", pady=(8, 0))
 
         self.stop_btn = ttk.Button(control, text="Стоп", command=self.stop_solver, state="disabled")
-        self.stop_btn.grid(row=2, column=3, sticky="we", pady=(8, 0), padx=5)
+        self.stop_btn.grid(row=3, column=3, sticky="we", pady=(8, 0), padx=5)
 
         self.status_var = tk.StringVar(value="Загрузите граф")
-        ttk.Label(control, textvariable=self.status_var).grid(row=2, column=4, columnspan=3, sticky="w", padx=5)
+        ttk.Label(control, textvariable=self.status_var).grid(row=3, column=4, columnspan=3, sticky="w", padx=5)
 
         control.columnconfigure(1, weight=1)
 
@@ -205,7 +236,7 @@ class AntColonyGUI:
                 alpha=0.95,
             )
 
-        title = "Муравьиный алгоритм: визуализация"
+        title = f"{self.algorithm_display_var.get()}: визуализация"
         if iteration is not None:
             title += f" | итерация {iteration}"
         if best_length is not None and best_length != float("inf"):
@@ -229,11 +260,17 @@ class AntColonyGUI:
             beta = float(self.beta_var.get())
             evaporation = float(self.evap_var.get())
             q = float(self.q_var.get())
+            elite_ants = int(self.elite_ants_var.get())
+            restarts = int(self.restarts_var.get())
+            steps_text = self.steps_var.get().strip()
+            steps_per_restart = int(steps_text) if steps_text else None
             seed_text = self.seed_var.get().strip()
             seed = int(seed_text) if seed_text else None
         except ValueError:
             messagebox.showerror("Ошибка", "Проверьте числовые параметры.")
             return
+
+        algorithm_key = self.algorithm_map.get(self.algorithm_display_var.get(), "ant_basic")
 
         self.stop_event.clear()
         self.start_btn.configure(state="disabled")
@@ -242,44 +279,68 @@ class AntColonyGUI:
 
         def worker():
             start_time = time.time()
-            solver = AntColonyTSP(
-                self.graph,
-                ants=ants,
-                alpha=alpha,
-                beta=beta,
-                evaporation=evaporation,
-                q=q,
-                seed=seed,
-            )
+            final_path = None
+            final_length = None
 
-            def callback(iteration, best_path, best_length, improved, previous_best):
-                if improved and best_path:
-                    prev_set = undirected_edges(previous_best) if previous_best else set()
-                    new_set = undirected_edges(best_path)
-                    added = new_set - prev_set
-                    removed = prev_set - new_set
-                else:
-                    added = set()
-                    removed = set()
-
-                self.events.put(
-                    (
-                        "progress",
-                        iteration,
-                        best_path,
-                        best_length,
-                        added,
-                        removed,
-                    )
+            if algorithm_key in {"ant_basic", "ant_elite"}:
+                solver = AntColonyTSP(
+                    self.graph,
+                    ants=ants,
+                    alpha=alpha,
+                    beta=beta,
+                    evaporation=evaporation,
+                    q=q,
+                    seed=seed,
+                    mode="elite" if algorithm_key == "ant_elite" else "basic",
+                    elite_ants=elite_ants,
                 )
 
-            result = solver.solve(
-                iterations=iterations,
-                callback=callback,
-                stop_condition=lambda: self.stop_event.is_set(),
-            )
+                def callback(iteration, best_path, best_length, improved, previous_best):
+                    if improved and best_path:
+                        prev_set = undirected_edges(previous_best) if previous_best else set()
+                        new_set = undirected_edges(best_path)
+                        added = new_set - prev_set
+                        removed = prev_set - new_set
+                    else:
+                        added = set()
+                        removed = set()
+
+                    self.events.put(
+                        (
+                            "progress",
+                            iteration,
+                            best_path,
+                            best_length,
+                            added,
+                            removed,
+                        )
+                    )
+
+                result = solver.solve(
+                    iterations=iterations,
+                    callback=callback,
+                    stop_condition=lambda: self.stop_event.is_set(),
+                )
+                if result is not None:
+                    final_path = result.best_path
+                    final_length = result.best_length
+            else:
+                mode = "boltzmann" if algorithm_key == "sa_boltzmann" else "classic"
+                tour, length = simulated_annealing(
+                    self.graph,
+                    restarts=restarts,
+                    steps_per_restart=steps_per_restart,
+                    seed=seed,
+                    acceptance_mode=mode,
+                    stop_condition=lambda: self.stop_event.is_set(),
+                )
+                if tour:
+                    final_path = tour + [tour[0]]
+                    final_length = length
+                    self.events.put(("progress", "final", final_path, final_length, set(), set()))
+
             elapsed = time.time() - start_time
-            self.events.put(("done", result, elapsed))
+            self.events.put(("done", final_path, final_length, elapsed))
 
         self.worker = threading.Thread(target=worker, daemon=True)
         self.worker.start()
@@ -305,21 +366,21 @@ class AntColonyGUI:
                         best_length=best_length,
                     )
                 elif kind == "done":
-                    _, result, elapsed = event
+                    _, best_path, best_length, elapsed = event
                     self.start_btn.configure(state="normal")
                     self.stop_btn.configure(state="disabled")
-                    if result is None:
+                    if best_path is None:
                         self.status_var.set(f"Завершено за {elapsed:.2f} c. Цикл не найден.")
                     else:
-                        self.result_path = result.best_path
-                        self.result_length = result.best_length
+                        self.result_path = best_path
+                        self.result_length = best_length
                         self.status_var.set(
-                            f"Готово за {elapsed:.2f} c. Лучшая длина: {result.best_length:.2f}"
+                            f"Готово за {elapsed:.2f} c. Лучшая длина: {best_length:.2f}"
                         )
                         self._draw_state(
-                            best_path=result.best_path,
+                            best_path=best_path,
                             iteration="final",
-                            best_length=result.best_length,
+                            best_length=best_length,
                         )
         except queue.Empty:
             pass

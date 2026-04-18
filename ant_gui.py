@@ -12,6 +12,16 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from ant_colony import AntColonyTSP
 from graphClass import Graph
 
+INF = float("inf")
+MATRIX_1GRAPH = [
+    [0, 3, INF, INF, 1, INF],
+    [3, 0, 8, INF, INF, 3],
+    [INF, 3, 0, 1, INF, 3],
+    [INF, INF, 8, 0, 3, INF],
+    [3, INF, INF, 1, 0, INF],
+    [3, INF, 1, 5, 4, 0],
+]
+
 
 def path_edges(path):
     if not path or len(path) < 2:
@@ -21,6 +31,20 @@ def path_edges(path):
 
 def undirected_edges(path):
     return {tuple(sorted((u, v))) for u, v in path_edges(path)}
+
+
+def graph_from_matrix(matrix, inf=INF):
+    n = len(matrix)
+    if any(len(row) != n for row in matrix):
+        raise ValueError("Матрица должна быть квадратной.")
+
+    graph = Graph(n)
+    for i in range(n):
+        for j in range(i + 1, n):
+            candidates = [w for w in (matrix[i][j], matrix[j][i]) if w != inf]
+            if candidates:
+                graph.add_edge(i, j, float(min(candidates)))
+    return graph
 
 
 class AntColonyGUI:
@@ -59,6 +83,10 @@ class AntColonyGUI:
         ttk.Entry(control, textvariable=self.file_var, width=45).grid(row=0, column=1, sticky="we", padx=5)
         ttk.Button(control, text="Выбрать", command=self.choose_file).grid(row=0, column=2, padx=5)
         ttk.Button(control, text="Загрузить", command=self.load_graph).grid(row=0, column=3, padx=5)
+        ttk.Button(control, text="Малый граф", command=self.load_small_graph).grid(row=0, column=4, padx=5)
+        ttk.Button(control, text="Старт на малом графе", command=self.run_small_graph).grid(
+            row=0, column=5, padx=5
+        )
 
         ttk.Label(control, text="Итераций").grid(row=1, column=0, sticky="w")
         ttk.Entry(control, textvariable=self.iter_var, width=8).grid(row=1, column=1, sticky="w")
@@ -118,6 +146,25 @@ class AntColonyGUI:
             self._draw_state()
         except Exception as exc:
             messagebox.showerror("Ошибка загрузки", str(exc))
+
+    def load_small_graph(self):
+        try:
+            self.graph = graph_from_matrix(MATRIX_1GRAPH)
+            self._build_visual_graph()
+            self.result_path = None
+            self.result_length = None
+            self.file_var.set("")
+            self.status_var.set(f"Загружен встроенный граф: {self.graph.num_nodes} вершин")
+            self._draw_state()
+        except Exception as exc:
+            messagebox.showerror("Ошибка загрузки", str(exc))
+
+    def run_small_graph(self):
+        if self.worker and self.worker.is_alive():
+            return
+        self.load_small_graph()
+        if self.graph is not None:
+            self.run_solver()
 
     def _build_visual_graph(self, max_edges=5000, seed=42):
         G = nx.Graph()

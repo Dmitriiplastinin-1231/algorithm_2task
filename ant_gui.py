@@ -41,9 +41,17 @@ def graph_from_matrix(matrix, inf=INF):
     graph = Graph(n)
     for i in range(n):
         for j in range(i + 1, n):
-            candidates = [w for w in (matrix[i][j], matrix[j][i]) if w != inf]
-            if candidates:
-                graph.add_edge(i, j, float(min(candidates)))
+            w_forward = matrix[i][j]
+            w_backward = matrix[j][i]
+            if w_forward == inf and w_backward == inf:
+                continue
+            if w_forward == inf:
+                weight = w_backward
+            elif w_backward == inf:
+                weight = w_forward
+            else:
+                weight = min(w_forward, w_backward)
+            graph.add_edge(i, j, float(weight))
     return graph
 
 

@@ -173,7 +173,8 @@ class AntColonyGUI:
             for j in range(i + 1, n):
                 w1 = matrix[i][j]
                 w2 = matrix[j][i]
-                # Если матрица несимметрична, берём минимальный конечный вес как общий вес неориентированного ребра.
+                # Для несимметричных значений берём минимальный конечный вес;
+                # если конечного веса нет ни в одном направлении, ребро не добавляется.
                 weight = min((w for w in (w1, w2) if w != float("inf")), default=None)
                 if weight is not None:
                     graph.add_edge(i, j, float(weight))
@@ -187,12 +188,14 @@ class AntColonyGUI:
             self.result_length = None
             self.status_var.set("Загружен тестовый граф MATRIX_1GRAPH")
             self._draw_state()
+            return True
         except Exception as exc:
+            self.graph = None
             messagebox.showerror("Ошибка загрузки MATRIX_1GRAPH", str(exc))
+            return False
 
     def run_preset_graph(self):
-        self.load_preset_graph()
-        if self.graph is not None:
+        if self.load_preset_graph():
             self.algorithm_display_var.set(self.DEFAULT_ALGORITHM_LABEL)
             self.run_solver()
 

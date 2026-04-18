@@ -51,17 +51,17 @@ class AnnealingGUI:
         ttk.Label(control, text="Рестарты").grid(row=1, column=0, sticky="w")
         ttk.Entry(control, textvariable=self.restarts_var, width=8).grid(row=1, column=1, sticky="w")
 
-        ttk.Label(control, text="Шагов на рестарт (пусто = авто)").grid(row=1, column=1, sticky="e", padx=(0, 90))
-        ttk.Entry(control, textvariable=self.steps_var, width=12).grid(row=1, column=1, sticky="e", padx=(0, 10))
+        ttk.Label(control, text="Шагов на рестарт (пусто = авто)").grid(row=1, column=2, sticky="w", padx=(12, 0))
+        ttk.Entry(control, textvariable=self.steps_var, width=12).grid(row=1, column=3, sticky="w", padx=(5, 0))
 
-        ttk.Label(control, text="seed").grid(row=1, column=2, sticky="w")
-        ttk.Entry(control, textvariable=self.seed_var, width=8).grid(row=1, column=2, sticky="e")
+        ttk.Label(control, text="seed").grid(row=1, column=4, sticky="w", padx=(12, 0))
+        ttk.Entry(control, textvariable=self.seed_var, width=8).grid(row=1, column=5, sticky="w", padx=(5, 0))
 
         self.start_btn = ttk.Button(control, text="Запустить имитацию отжига", command=self.run_solver)
-        self.start_btn.grid(row=2, column=0, columnspan=2, sticky="we", pady=(8, 0))
+        self.start_btn.grid(row=2, column=0, columnspan=3, sticky="we", pady=(8, 0))
 
         self.status_var = tk.StringVar(value="Загрузите граф")
-        ttk.Label(control, textvariable=self.status_var).grid(row=2, column=2, columnspan=2, sticky="w", padx=5)
+        ttk.Label(control, textvariable=self.status_var).grid(row=2, column=3, columnspan=3, sticky="w", padx=5)
 
         control.columnconfigure(1, weight=1)
 
@@ -84,7 +84,9 @@ class AnnealingGUI:
             return
         try:
             self.graph = Graph.load_from_stp(file_name)
-            self._build_visual_graph()
+            seed_text = self.seed_var.get().strip()
+            layout_seed = int(seed_text) if seed_text else 42
+            self._build_visual_graph(seed=layout_seed)
             self.status_var.set(f"Граф загружен: {self.graph.num_nodes} вершин")
             self._draw_state()
         except Exception as exc:
@@ -113,9 +115,9 @@ class AnnealingGUI:
         if n > 300:
             self.pos = nx.circular_layout(self.graph_nx)
         elif n > 120:
-            self.pos = nx.spring_layout(self.graph_nx, seed=42, k=0.15, iterations=35)
+            self.pos = nx.spring_layout(self.graph_nx, seed=seed, k=0.15, iterations=35)
         else:
-            self.pos = nx.spring_layout(self.graph_nx, seed=42)
+            self.pos = nx.spring_layout(self.graph_nx, seed=seed)
 
     def _draw_state(self, best_path=None, best_length=None):
         self.ax.clear()

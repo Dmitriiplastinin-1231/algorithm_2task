@@ -28,7 +28,7 @@ def undirected_edges(path):
 class AntColonyGUI:
     DEFAULT_ALGORITHM_LABEL = "Муравьиный (базовый)"
 
-    PRESET_MATRIX_1GRAPH = [
+    PRESET_MATRIX_1_GRAPH = [
         [0, 3, float("inf"), float("inf"), 1, float("inf")],
         [3, 0, 8, float("inf"), float("inf"), 3],
         [float("inf"), 3, 0, 1, float("inf"), 3],
@@ -194,7 +194,7 @@ class AntColonyGUI:
 
     def load_preset_graph(self):
         try:
-            self.graph = self._build_graph_from_matrix(self.PRESET_MATRIX_1GRAPH)
+            self.graph = self._build_graph_from_matrix(self.PRESET_MATRIX_1_GRAPH)
             self._build_visual_graph()
             self.result_path = None
             self.result_length = None

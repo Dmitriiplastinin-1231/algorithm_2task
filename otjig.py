@@ -100,9 +100,12 @@ def simulated_annealing(
         temperature = current_length / n
         base_temperature = temperature
         min_temperature = 1e-4
-        alpha = (min_temperature / max(temperature, min_temperature)) ** (
-            1.0 / max(1, steps_per_restart - 1)
-        )
+        if temperature <= min_temperature:
+            temperature = min_temperature
+            base_temperature = min_temperature
+            alpha = 1.0
+        else:
+            alpha = (min_temperature / temperature) ** (1.0 / max(1, steps_per_restart - 1))
 
         for step in range(steps_per_restart):
             if stop_condition and stop_condition():

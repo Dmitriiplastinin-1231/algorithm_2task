@@ -148,11 +148,8 @@ class AntColonyTSP:
                 best_length = iteration_best_len
                 improved = True
 
-            if self.mode == "elite":
-                if best_path is not None and self.elite_ants > 0:
-                    self._deposit(best_path, best_length, multiplier=self.elite_ants)
-            elif improved:
-                self._deposit(best_path, best_length)
+            if self.mode == "elite" and best_path is not None and self.elite_ants > 0:
+                self._deposit(best_path, best_length, multiplier=self.elite_ants)
 
             if callback:
                 callback(

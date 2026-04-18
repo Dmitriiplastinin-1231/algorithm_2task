@@ -19,6 +19,7 @@ class AntColonyTSP:
         beta=3.0,
         evaporation=0.5,
         q=100.0,
+        elite_ants=0,
         seed=None,
     ):
         self.graph = graph
@@ -28,6 +29,7 @@ class AntColonyTSP:
         # Ограничиваем испарение в диапазоне [0.0, 0.999], чтобы феромон не обнулялся полностью за шаг.
         self.evaporation = min(max(float(evaporation), 0.0), 0.999)
         self.q = float(q)
+        self.elite_ants = max(0, int(elite_ants))
         self.random = random.Random(seed)
         self.pheromone = {}
         self._init_pheromone()
@@ -102,10 +104,12 @@ class AntColonyTSP:
         for edge in self.pheromone:
             self.pheromone[edge] = max(AntColonyTSP.MIN_PHEROMONE, self.pheromone[edge] * k)
 
-    def _deposit(self, tour, length):
+    def _deposit(self, tour, length, multiplier=1.0):
         if not tour or length <= 0:
             return
-        delta = self.q / length
+        delta = (self.q / length) * max(0.0, float(multiplier))
+        if delta <= 0:
+            return
         for i in range(len(tour) - 1):
             edge = self._edge_key(tour[i], tour[i + 1])
             self.pheromone[edge] = self.pheromone.get(edge, AntColonyTSP.MIN_PHEROMONE) + delta
@@ -141,7 +145,8 @@ class AntColonyTSP:
                 best_path = iteration_best[:]
                 best_length = iteration_best_len
                 improved = True
-                self._deposit(best_path, best_length)
+            if best_path is not None and self.elite_ants > 0:
+                self._deposit(best_path, best_length, multiplier=self.elite_ants)
 
             if callback:
                 callback(

@@ -53,6 +53,7 @@ class AntColonyGUI:
         self.beta_var = tk.StringVar(value="3.0")
         self.evap_var = tk.StringVar(value="0.45")
         self.q_var = tk.StringVar(value="120.0")
+        self.elite_ants_var = tk.StringVar(value="5")
         self.seed_var = tk.StringVar(value="42")
 
         ttk.Label(control, text="Файл графа (.stp):").grid(row=0, column=0, sticky="w")
@@ -78,8 +79,11 @@ class AntColonyGUI:
         ttk.Label(control, text="Q").grid(row=1, column=5, sticky="w")
         ttk.Entry(control, textvariable=self.q_var, width=8).grid(row=1, column=5, sticky="e")
 
-        ttk.Label(control, text="seed").grid(row=1, column=6, sticky="w")
-        ttk.Entry(control, textvariable=self.seed_var, width=8).grid(row=1, column=6, sticky="e")
+        ttk.Label(control, text="elite").grid(row=1, column=6, sticky="w")
+        ttk.Entry(control, textvariable=self.elite_ants_var, width=8).grid(row=1, column=6, sticky="e")
+
+        ttk.Label(control, text="seed").grid(row=1, column=7, sticky="w")
+        ttk.Entry(control, textvariable=self.seed_var, width=8).grid(row=1, column=7, sticky="e")
 
         self.start_btn = ttk.Button(control, text="Запустить муравьиный алгоритм", command=self.run_solver)
         self.start_btn.grid(row=2, column=0, columnspan=3, sticky="we", pady=(8, 0))
@@ -229,6 +233,7 @@ class AntColonyGUI:
             beta = float(self.beta_var.get())
             evaporation = float(self.evap_var.get())
             q = float(self.q_var.get())
+            elite_ants = int(self.elite_ants_var.get())
             seed_text = self.seed_var.get().strip()
             seed = int(seed_text) if seed_text else None
         except ValueError:
@@ -249,6 +254,7 @@ class AntColonyGUI:
                 beta=beta,
                 evaporation=evaporation,
                 q=q,
+                elite_ants=elite_ants,
                 seed=seed,
             )
 

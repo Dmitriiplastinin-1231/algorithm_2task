@@ -25,6 +25,8 @@ def undirected_edges(path):
 
 
 class AntColonyGUI:
+    DEFAULT_ALGORITHM_LABEL = "Муравьиный (базовый)"
+
     PRESET_MATRIX_1GRAPH = [
         [0, 3, float("inf"), float("inf"), 1, float("inf")],
         [3, 0, 8, float("inf"), float("inf"), 3],
@@ -74,7 +76,7 @@ class AntColonyGUI:
         self.restarts_var = tk.StringVar(value="8")
         self.steps_var = tk.StringVar(value="")
         self.seed_var = tk.StringVar(value="42")
-        self.algorithm_display_var = tk.StringVar(value=self.ALGORITHM_OPTIONS[0][0])
+        self.algorithm_display_var = tk.StringVar(value=self.DEFAULT_ALGORITHM_LABEL)
         self.algorithm_map = {label: key for label, key in self.ALGORITHM_OPTIONS}
 
         ttk.Label(control, text="Файл графа (.stp):").grid(row=0, column=0, sticky="w")
@@ -190,7 +192,7 @@ class AntColonyGUI:
     def run_preset_graph(self):
         self.load_preset_graph()
         if self.graph is not None:
-            self.algorithm_display_var.set(self.ALGORITHM_OPTIONS[0][0])
+            self.algorithm_display_var.set(self.DEFAULT_ALGORITHM_LABEL)
             self.run_solver()
 
     def _build_visual_graph(self, max_edges=5000, seed=42):

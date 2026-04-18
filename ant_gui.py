@@ -2,6 +2,7 @@ import queue
 import random
 import threading
 import time
+import traceback
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
@@ -173,8 +174,8 @@ class AntColonyGUI:
             for j in range(i + 1, n):
                 w1 = matrix[i][j]
                 w2 = matrix[j][i]
-                # Для несимметричных значений берём минимальный конечный вес;
-                # если конечного веса нет ни в одном направлении, ребро не добавляется.
+                # Для несимметричных значений берём минимальный конечный вес.
+                # Если конечного веса нет ни в одном направлении, ребро не добавляется.
                 weight = min((w for w in (w1, w2) if w != float("inf")), default=None)
                 if weight is not None:
                     graph.add_edge(i, j, float(weight))
@@ -390,7 +391,8 @@ class AntColonyGUI:
                         self.events.put(("progress", "final", final_path, final_length, set(), set()))
             except Exception as exc:
                 worker_failed = True
-                self.events.put(("error", str(exc)))
+                error_details = f"{type(exc).__name__}: {exc}\n\n{traceback.format_exc()}"
+                self.events.put(("error", error_details))
 
             elapsed = time.time() - start_time
             self.events.put(("done", final_path, final_length, elapsed, worker_failed))

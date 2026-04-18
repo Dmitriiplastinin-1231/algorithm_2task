@@ -107,7 +107,7 @@ def simulated_annealing(graph, restarts=8, steps_per_restart=None, seed=42, cool
                     current_best_tour = current_tour[:]
 
             if cooling == "geometric":
-                temperature = max(min_temperature, temperature * alpha)
+                temperature *= alpha
 
         if current_best_length < best_length:
             best_length = current_best_length

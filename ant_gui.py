@@ -316,6 +316,8 @@ class AntColonyGUI:
                 return
 
         try:
+            ant_seed_text = self.ant_seed_var.get().strip()
+            sa_seed_text = self.sa_seed_var.get().strip()
             ant_params = {
                 "iterations": int(self.ant_iter_var.get()),
                 "ants": int(self.ant_ants_var.get()),
@@ -324,13 +326,13 @@ class AntColonyGUI:
                 "evaporation": float(self.ant_evap_var.get()),
                 "q": float(self.ant_q_var.get()),
                 "elite_ants": int(self.ant_elite_ants_var.get()),
-                "seed": int(self.ant_seed_var.get().strip()) if self.ant_seed_var.get().strip() else None,
+                "seed": int(ant_seed_text) if ant_seed_text else None,
             }
             sa_steps_text = self.sa_steps_var.get().strip()
             sa_params = {
                 "restarts": int(self.sa_restarts_var.get()),
                 "steps_per_restart": int(sa_steps_text) if sa_steps_text else None,
-                "seed": int(self.sa_seed_var.get().strip()) if self.sa_seed_var.get().strip() else None,
+                "seed": int(sa_seed_text) if sa_seed_text else None,
             }
         except ValueError:
             messagebox.showerror("Ошибка", "Проверьте числовые параметры.")

@@ -77,7 +77,7 @@ class AnnealingGUI:
         self.root.bind("<Destroy>", self._on_destroy, add="+")
 
     def _on_destroy(self, _event):
-        if self.fig is not None:
+        if _event.widget is self.root and self.fig is not None:
             plt.close(self.fig)
             self.fig = None
 

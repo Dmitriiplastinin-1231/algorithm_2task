@@ -15,6 +15,7 @@
 Графики сохраняются в папку results_elite/ рядом со скриптом.
 """
 
+import math
 import os
 import statistics
 
@@ -153,7 +154,7 @@ def main():
         vals, means, stds = sweep_param(graph, param_name, values)
 
         # Выбираем значение с минимальной средней длиной
-        finite_pairs = [(m, v) for m, v in zip(means, vals) if m == m]  # исключаем nan
+        finite_pairs = [(m, v) for m, v in zip(means, vals) if not math.isnan(m)]
         if not finite_pairs:
             print(f"  Нет допустимых результатов для {param_name}, пропускаем.")
             continue

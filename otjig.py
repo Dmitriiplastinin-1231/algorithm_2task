@@ -63,6 +63,8 @@ def simulated_annealing(
     graph,
     restarts=8,
     steps_per_restart=None,
+    initial_temperature=None,
+    temperature_change_coef=None,
     seed=42,
     acceptance_mode="classic",
     stop_condition=None,
@@ -81,6 +83,11 @@ def simulated_annealing(
     if steps_per_restart is None:
         steps_per_restart = max(5000, n * 200)
 
+    if initial_temperature is not None and initial_temperature <= 0:
+        raise ValueError("initial_temperature должна быть > 0")
+    if temperature_change_coef is not None and temperature_change_coef <= 0:
+        raise ValueError("temperature_change_coef должен быть > 0")
+
     best_tour = None
     best_length = float("inf")
     initial_candidates = min(8, n)
@@ -97,21 +104,29 @@ def simulated_annealing(
         current_best_tour = tour[:]
         current_best_length = current_length
 
-        temperature = current_length / n
+        temperature = initial_temperature if initial_temperature is not None else (current_length / n)
         base_temperature = temperature
         min_temperature = 1e-4
         if temperature <= min_temperature:
             temperature = min_temperature
             base_temperature = min_temperature
-            alpha = 1.0
+            alpha = temperature_change_coef if temperature_change_coef is not None else 1.0
         else:
-            alpha = (min_temperature / temperature) ** (1.0 / max(1, steps_per_restart - 1))
+            if temperature_change_coef is not None:
+                alpha = temperature_change_coef
+            elif acceptance_mode == "classic":
+                alpha = (min_temperature / temperature) ** (1.0 / max(1, steps_per_restart - 1))
+            else:
+                alpha = 1.0
 
         for step in range(steps_per_restart):
             if stop_condition and stop_condition():
                 break
             if acceptance_mode == "boltzmann":
-                temperature = max(min_temperature, base_temperature / math.log(step + 2.0))
+                temperature = max(
+                    min_temperature,
+                    (base_temperature * (alpha**step)) / math.log(step + 2.0),
+                )
             pair = random_two_opt_indices(n)
             if pair is None:
                 continue

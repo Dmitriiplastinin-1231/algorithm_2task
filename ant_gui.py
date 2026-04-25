@@ -77,6 +77,8 @@ class AntColonyGUI:
         self.ant_seed_var = tk.StringVar(value="42")
         self.sa_restarts_var = tk.StringVar(value="8")
         self.sa_steps_var = tk.StringVar(value="")
+        self.sa_initial_temp_var = tk.StringVar(value="")
+        self.sa_temp_coef_var = tk.StringVar(value="")
         self.sa_seed_var = tk.StringVar(value="42")
         self.algorithm_display_var = tk.StringVar(value=self.DEFAULT_ALGORITHM_LABEL)
         self.algorithm_map = {label: key for label, key in self.ALGORITHM_OPTIONS}
@@ -126,6 +128,12 @@ class AntColonyGUI:
 
         ttk.Label(control, text="Шагов/рестарт").grid(row=5, column=2, sticky="w")
         ttk.Entry(control, textvariable=self.sa_steps_var, width=8).grid(row=5, column=2, sticky="e")
+
+        ttk.Label(control, text="Нач. темп.").grid(row=5, column=4, sticky="w")
+        ttk.Entry(control, textvariable=self.sa_initial_temp_var, width=8).grid(row=5, column=4, sticky="e")
+
+        ttk.Label(control, text="Коэф. темп.").grid(row=5, column=5, sticky="w")
+        ttk.Entry(control, textvariable=self.sa_temp_coef_var, width=8).grid(row=5, column=5, sticky="e")
 
         ttk.Label(control, text="seed").grid(row=5, column=3, sticky="w")
         ttk.Entry(control, textvariable=self.sa_seed_var, width=8).grid(row=5, column=3, sticky="e")
@@ -329,9 +337,13 @@ class AntColonyGUI:
                 "seed": int(ant_seed_text) if ant_seed_text else None,
             }
             sa_steps_text = self.sa_steps_var.get().strip()
+            sa_initial_temp_text = self.sa_initial_temp_var.get().strip()
+            sa_temp_coef_text = self.sa_temp_coef_var.get().strip()
             sa_params = {
                 "restarts": int(self.sa_restarts_var.get()),
                 "steps_per_restart": int(sa_steps_text) if sa_steps_text else None,
+                "initial_temperature": float(sa_initial_temp_text) if sa_initial_temp_text else None,
+                "temperature_change_coef": float(sa_temp_coef_text) if sa_temp_coef_text else None,
                 "seed": int(sa_seed_text) if sa_seed_text else None,
             }
         except ValueError:
@@ -399,6 +411,8 @@ class AntColonyGUI:
                         self.graph,
                         restarts=sa_params["restarts"],
                         steps_per_restart=sa_params["steps_per_restart"],
+                        initial_temperature=sa_params["initial_temperature"],
+                        temperature_change_coef=sa_params["temperature_change_coef"],
                         seed=sa_params["seed"],
                         acceptance_mode=mode,
                         stop_condition=lambda: self.stop_event.is_set(),

@@ -66,6 +66,8 @@ def simulated_annealing(
     seed=42,
     acceptance_mode="classic",
     stop_condition=None,
+    t0_multiplier=1.0,
+    min_temperature=1e-4,
 ):
     acceptance_mode = (acceptance_mode or "classic").lower()
     if acceptance_mode not in {"classic", "boltzmann"}:
@@ -97,9 +99,8 @@ def simulated_annealing(
         current_best_tour = tour[:]
         current_best_length = current_length
 
-        temperature = current_length / n
+        temperature = (current_length / n) * t0_multiplier
         base_temperature = temperature
-        min_temperature = 1e-4
         if temperature <= min_temperature:
             temperature = min_temperature
             base_temperature = min_temperature

@@ -129,32 +129,32 @@ class AntColonyGUI:
         ttk.Label(control, text="Шагов/рестарт").grid(row=5, column=2, sticky="w")
         ttk.Entry(control, textvariable=self.sa_steps_var, width=8).grid(row=5, column=2, sticky="e")
 
-        ttk.Label(control, text="Нач. темп.").grid(row=5, column=4, sticky="w")
-        ttk.Entry(control, textvariable=self.sa_initial_temp_var, width=8).grid(row=5, column=4, sticky="e")
-
-        ttk.Label(control, text="Коэф. темп.").grid(row=5, column=5, sticky="w")
-        ttk.Entry(control, textvariable=self.sa_temp_coef_var, width=8).grid(row=5, column=5, sticky="e")
-
         ttk.Label(control, text="seed").grid(row=5, column=3, sticky="w")
         ttk.Entry(control, textvariable=self.sa_seed_var, width=8).grid(row=5, column=3, sticky="e")
 
-        ttk.Label(control, text="Алгоритм").grid(row=6, column=0, sticky="w", pady=(8, 0))
+        ttk.Label(control, text="Начальная температура").grid(row=6, column=0, sticky="w", pady=(6, 0))
+        ttk.Entry(control, textvariable=self.sa_initial_temp_var, width=10).grid(row=6, column=1, sticky="w", pady=(6, 0))
+
+        ttk.Label(control, text="Коэффициент температуры").grid(row=6, column=2, sticky="w", pady=(6, 0))
+        ttk.Entry(control, textvariable=self.sa_temp_coef_var, width=10).grid(row=6, column=3, sticky="w", pady=(6, 0))
+
+        ttk.Label(control, text="Алгоритм").grid(row=7, column=0, sticky="w", pady=(8, 0))
         ttk.Combobox(
             control,
             textvariable=self.algorithm_display_var,
             values=[label for label, _ in self.ALGORITHM_OPTIONS],
             state="readonly",
             width=28,
-        ).grid(row=6, column=1, sticky="w", pady=(8, 0))
+        ).grid(row=7, column=1, sticky="w", pady=(8, 0))
 
         self.start_btn = ttk.Button(control, text="Запустить выбранный алгоритм", command=self.run_solver)
-        self.start_btn.grid(row=7, column=0, columnspan=3, sticky="we", pady=(8, 0))
+        self.start_btn.grid(row=8, column=0, columnspan=3, sticky="we", pady=(8, 0))
 
         self.stop_btn = ttk.Button(control, text="Стоп", command=self.stop_solver, state="disabled")
-        self.stop_btn.grid(row=7, column=3, sticky="we", pady=(8, 0), padx=5)
+        self.stop_btn.grid(row=8, column=3, sticky="we", pady=(8, 0), padx=5)
 
         self.status_var = tk.StringVar(value="Загрузите граф")
-        ttk.Label(control, textvariable=self.status_var).grid(row=7, column=4, columnspan=3, sticky="w", padx=5)
+        ttk.Label(control, textvariable=self.status_var).grid(row=8, column=4, columnspan=3, sticky="w", padx=5)
 
         control.columnconfigure(1, weight=1)
 

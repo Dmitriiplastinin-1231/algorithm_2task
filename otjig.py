@@ -84,9 +84,9 @@ def simulated_annealing(
         steps_per_restart = max(5000, n * 200)
 
     if initial_temperature is not None and initial_temperature <= 0:
-        raise ValueError("initial_temperature должна быть > 0")
+        raise ValueError("initial_temperature must be > 0")
     if temperature_change_coef is not None and temperature_change_coef <= 0:
-        raise ValueError("temperature_change_coef должен быть > 0")
+        raise ValueError("temperature_change_coef must be > 0")
 
     best_tour = None
     best_length = float("inf")
@@ -114,19 +114,14 @@ def simulated_annealing(
         else:
             if temperature_change_coef is not None:
                 alpha = temperature_change_coef
-            elif acceptance_mode == "classic":
-                alpha = (min_temperature / temperature) ** (1.0 / max(1, steps_per_restart - 1))
             else:
-                alpha = 1.0
+                alpha = (min_temperature / temperature) ** (1.0 / max(1, steps_per_restart - 1))
 
         for step in range(steps_per_restart):
             if stop_condition and stop_condition():
                 break
             if acceptance_mode == "boltzmann":
-                temperature = max(
-                    min_temperature,
-                    (base_temperature * (alpha**step)) / math.log(step + 2.0),
-                )
+                temperature = max(min_temperature, base_temperature / math.log(step + 2.0))
             pair = random_two_opt_indices(n)
             if pair is None:
                 continue
